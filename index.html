@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pedido Hoy</title>
+<style>
+  :root { --cell-font: 16px; }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+    color: #111111;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 16px 12px 40px;
+  }
+
+  h1 {
+    font-size: 22px;
+    margin: 4px 0 16px;
+    text-align: center;
+  }
+
+  /* ---- Interruptor (toggle) ---- */
+  .toggle-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background: #f4f4f4;
+    border: 2px solid #e0e0e0;
+    border-radius: 14px;
+    padding: 18px 16px;
+    margin-bottom: 18px;
+  }
+
+  .toggle-label {
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 78px;
+    height: 44px;
+    flex: 0 0 auto;
+  }
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: #c8c8c8;
+    transition: .2s;
+    border-radius: 44px;
+  }
+  .slider:before {
+    content: "";
+    position: absolute;
+    height: 36px;
+    width: 36px;
+    left: 4px;
+    bottom: 4px;
+    background: #ffffff;
+    transition: .2s;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,.35);
+  }
+  .switch input:checked + .slider { background: #2e7d32; }
+  .switch input:checked + .slider:before { transform: translateX(34px); }
+  .switch input:disabled + .slider { opacity: .5; cursor: progress; }
+
+  /* ---- Botones de zoom ---- */
+  .zoom-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .zoom-bar button {
+    flex: 1;
+    min-height: 56px;
+    font-size: 22px;
+    font-weight: 700;
+    border: 2px solid #1565c0;
+    background: #ffffff;
+    color: #1565c0;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+  .zoom-bar button:active { background: #1565c0; color: #ffffff; }
+
+  /* ---- Estado / mensajes ---- */
+  .status {
+    text-align: center;
+    font-size: 15px;
+    color: #555;
+    min-height: 22px;
+    margin-bottom: 10px;
+  }
+  .status.error { color: #c62828; font-weight: 700; }
+
+  /* ---- Tabla ---- */
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: var(--cell-font);
+  }
+  th, td {
+    border: 1px solid #dddddd;
+    padding: 12px 14px;
+    text-align: left;
+    white-space: nowrap;
+  }
+  thead th {
+    background: #f0f0f0;
+    position: sticky;
+    top: 0;
+  }
+  tbody tr:nth-child(even) { background: #fafafa; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>🥖 Pedido Hoy 🥖</h1>
+
+  <!-- Interruptor -->
+  <div class="toggle-box">
+    <span class="toggle-label">Solo activos</span>
+    <label class="switch">
+      <input type="checkbox" id="toggleActivos">
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <!-- Botones de zoom -->
+  <div class="zoom-bar">
+    <button id="btnZoomIn"  title="Aumentar texto">A+</button>
+    <button id="btnZoomOut" title="Reducir texto">A-</button>
+    <button id="btnZoomFit" title="Encajar en pantalla">[ ]</button>
+  </div>
+
+  <div class="status" id="status">Cargando…</div>
+
+  <div class="table-scroll" id="tableScroll">
+    <table id="dataTable">
+      <thead><tr id="theadRow"></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   1) CONFIGURACIÓN  —  PEGA AQUÍ TU URL DE APPS SCRIPT
+   ============================================================
+   Después de desplegar el Apps Script como aplicación web,
+   copia la URL que termina en /exec y pégala entre las comillas
+   de abajo (reemplaza el texto PEGA_AQUI...).                     */
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyUCIQhS-A31S0gJIFE9G5Bio-d59fozLBiRF4Qz4eF6GRlo6HsxtUqM0tIB273crnl/exec";
+/* ============================================================ */
+
+// URL del CSV publicado del Google Sheet (fuente de datos).
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR1BjbiQM-QP0XSjShP74iarll9RqMh41FakufDxFL6Zdpuih_Uis-PjGpl0soEFqFm2mU3Kpr9hNZL/pub?gid=121579684&single=true&output=csv";
+
+// Columnas que se mostrarán (en este orden).
+const COLUMNS = ["Fecha Entrega", "Apto", "Normal", "Sobao", "Matalauva"];
+
+const statusEl   = document.getElementById('status');
+const theadRow   = document.getElementById('theadRow');
+const tbody      = document.getElementById('tbody');
+const tableEl    = document.getElementById('dataTable');
+const scrollEl   = document.getElementById('tableScroll');
+const toggleEl   = document.getElementById('toggleActivos');
+
+let fontSize = 16;
+function applyFont() {
+  document.documentElement.style.setProperty('--cell-font', fontSize + 'px');
+}
+
+/* ---------- Parser CSV (soporta comillas y comas internas) ---------- */
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = "", inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else { inQuotes = false; }
+      } else { field += c; }
+    } else {
+      if (c === '"') { inQuotes = true; }
+      else if (c === ',') { row.push(field); field = ""; }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ""; }
+      else if (c === '\r') { /* ignorar */ }
+      else { field += c; }
+    }
+  }
+  if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+/* ---------- Cargar datos del Sheet (sin caché) ---------- */
+async function loadData() {
+  setStatus("Cargando…", false);
+  try {
+    const url = CSV_URL + "&_cb=" + Date.now(); // evita la caché
+    const resp = await fetch(url, { cache: "no-store" });
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    const text = await resp.text();
+    renderTable(parseCSV(text));
+    setStatus("", false);
+  } catch (err) {
+    setStatus("No se pudieron cargar los datos. Revisa la conexión. (" + err.message + ")", true);
+  }
+}
+
+function renderTable(rows) {
+  theadRow.innerHTML = "";
+  tbody.innerHTML = "";
+  if (!rows.length) { setStatus("La hoja no tiene datos.", true); return; }
+
+  const header = rows[0].map(h => h.trim());
+
+  // Localizar las columnas pedidas por nombre.
+  let indices = COLUMNS.map(name => {
+    const wanted = name.trim().toLowerCase();
+    return header.findIndex(h => h.toLowerCase() === wanted);
+  });
+
+  let labels = COLUMNS.slice();
+  // Si no se encontró ninguna columna por nombre, mostrar todas.
+  if (indices.every(i => i === -1)) {
+    indices = header.map((_, i) => i);
+    labels  = header;
+  }
+
+  indices.forEach((idx, k) => {
+    const th = document.createElement('th');
+    th.textContent = (idx === -1) ? labels[k] : header[idx];
+    theadRow.appendChild(th);
+  });
+
+  for (let r = 1; r < rows.length; r++) {
+    const cells = rows[r];
+    if (cells.every(v => (v || "").trim() === "")) continue; // saltar filas vacías
+    const tr = document.createElement('tr');
+    indices.forEach(idx => {
+      const td = document.createElement('td');
+      td.textContent = (idx === -1 || cells[idx] === undefined) ? "" : cells[idx];
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  }
+}
+
+/* ---------- Interruptor: escribir TRUE/FALSE en F2 ---------- */
+async function setFilter(isOn) {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("PEGA_AQUI") === 0) {
+    setStatus("Falta pegar la URL del Apps Script en el código.", true);
+    toggleEl.checked = !isOn; // revertir el interruptor
+    return;
+  }
+  toggleEl.disabled = true;
+  setStatus("Guardando…", false);
+  try {
+    const value = isOn ? "TRUE" : "FALSE";
+    await fetch(APPS_SCRIPT_URL + "?value=" + value, { method: "GET" });
+    localStorage.setItem("soloActivos", value);
+    await loadData(); // recargar datos ya filtrados
+  } catch (err) {
+    setStatus("No se pudo guardar el cambio. (" + err.message + ")", true);
+    toggleEl.checked = !isOn; // revertir el interruptor
+  } finally {
+    toggleEl.disabled = false;
+  }
+}
+
+/* ---------- Zoom ---------- */
+function zoomIn()  { fontSize = Math.min(fontSize + 2, 48); applyFont(); }
+function zoomOut() { fontSize = Math.max(fontSize - 2, 8);  applyFont(); }
+function zoomFit() {
+  fontSize = 20;
+  applyFont();
+  let guard = 0;
+  while (tableEl.scrollWidth > scrollEl.clientWidth && fontSize > 6 && guard < 60) {
+    fontSize -= 1;
+    applyFont();
+    guard++;
+  }
+}
+
+function setStatus(msg, isError) {
+  statusEl.textContent = msg;
+  statusEl.className = "status" + (isError ? " error" : "");
+}
+
+/* ---------- Eventos ---------- */
+document.getElementById('btnZoomIn').addEventListener('click', zoomIn);
+document.getElementById('btnZoomOut').addEventListener('click', zoomOut);
+document.getElementById('btnZoomFit').addEventListener('click', zoomFit);
+toggleEl.addEventListener('change', () => setFilter(toggleEl.checked));
+
+// Recuerda la posición del interruptor entre recargas (no reescribe F2 al cargar).
+if (localStorage.getItem("soloActivos") === "TRUE") toggleEl.checked = true;
+
+applyFont();
+loadData();
+</script>
+</body>
+</html>
