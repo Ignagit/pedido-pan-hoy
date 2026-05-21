@@ -9,6 +9,8 @@
     --cell-font: 15px;
     --cyan: #0891b2;
     --cyan-dark: #0e7490;
+    --green: #16a34a;
+    --green-dark: #15803d;
     --ink: #0f172a;
   }
 
@@ -22,72 +24,28 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     -webkit-text-size-adjust: 100%;
     -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
   }
 
   .wrap {
     max-width: 900px;
     margin: 0 auto;
-    padding: calc(env(safe-area-inset-top) + 12px) 10px 32px;
+    padding: calc(env(safe-area-inset-top) + 12px) 10px 12px;
   }
 
-  h1 {
-    font-size: 21px;
-    font-weight: 800;
-    letter-spacing: .01em;
-    margin: 0 0 14px;
-    text-align: center;
-  }
-
-  /* ---- Interruptor (toggle) ---- */
-  .toggle-box {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    background: #f8fafc;
-    border: 1px solid #e5e7eb;
-    border-radius: 16px;
-    padding: 16px;
-    margin-bottom: 14px;
-  }
-  .toggle-label { font-size: 19px; font-weight: 700; }
-  .switch {
-    position: relative;
-    display: inline-block;
-    width: 76px;
-    height: 42px;
-    flex: 0 0 auto;
-  }
-  .switch input { opacity: 0; width: 0; height: 0; }
-  .slider {
-    position: absolute;
-    cursor: pointer;
-    inset: 0;
-    background: #cbd5e1;
-    transition: background .2s ease;
-    border-radius: 42px;
-  }
-  .slider:before {
-    content: "";
-    position: absolute;
-    height: 34px;
-    width: 34px;
-    left: 4px;
-    bottom: 4px;
+  /* ---- Cabecera fija de la página ---- */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
     background: #ffffff;
-    transition: transform .2s ease;
-    border-radius: 50%;
-    box-shadow: 0 1px 4px rgba(0,0,0,.3);
+    padding-bottom: 8px;
   }
-  .switch input:checked + .slider { background: var(--cyan); }
-  .switch input:checked + .slider:before { transform: translateX(34px); }
-  .switch input:disabled + .slider { opacity: .5; cursor: progress; }
 
-  /* ---- CTAs de la cabecera ---- */
   .cta-bar {
     display: flex;
-    gap: 10px;
-    margin-bottom: 14px;
+    gap: 8px;
+    margin-bottom: 10px;
   }
   .cta {
     border: none;
@@ -98,73 +56,133 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 8px;
     font-family: inherit;
     box-shadow: 0 4px 14px rgba(8,145,178,.28);
     transition: transform .14s ease, background .18s ease, box-shadow .18s ease;
     -webkit-tap-highlight-color: transparent;
   }
   .cta:hover { background: var(--cyan-dark); }
-  .cta:active { transform: scale(.95); box-shadow: 0 2px 8px rgba(8,145,178,.22); }
-  .cta-icon { flex: 0 0 58px; height: 58px; }
-  .cta-icon svg { width: 26px; height: 26px; display: block; }
+  .cta:active { transform: scale(.94); box-shadow: 0 2px 8px rgba(8,145,178,.22); }
+
+  .cta-icon { flex: 0 0 48px; height: 54px; }
+  .cta-icon svg { width: 24px; height: 24px; display: block; }
+
   .cta-complete {
     flex: 1;
-    height: 58px;
-    font-size: 20px;
+    height: 54px;
+    font-size: 15px;
     font-weight: 800;
-    letter-spacing: .02em;
+    letter-spacing: .01em;
+    line-height: 1.1;
+    padding: 0 8px;
+    white-space: normal;
+    text-align: center;
   }
+  .cta-complete svg { width: 20px; height: 20px; flex: 0 0 auto; }
+
+  /* ---- Interruptor MES | switch | HOY ---- */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+  }
+  .t-label {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    color: #94a3b8;
+    transition: color .2s ease;
+    user-select: none;
+  }
+  #lblMes.active { color: var(--cyan-dark); }
+  #lblHoy.active { color: var(--green-dark); }
+
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 64px;
+    height: 36px;
+    flex: 0 0 auto;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute;
+    inset: 0;
+    cursor: pointer;
+    background: #cbd5e1;
+    border-radius: 36px;
+    transition: background .2s ease;
+  }
+  .slider:before {
+    content: "";
+    position: absolute;
+    height: 28px;
+    width: 28px;
+    left: 4px;
+    bottom: 4px;
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0,0,0,.3);
+    transition: transform .2s ease;
+  }
+  .switch input:checked + .slider { background: var(--green); }
+  .switch input:checked + .slider:before { transform: translateX(28px); }
+  .switch input:disabled + .slider { opacity: .5; cursor: progress; }
 
   /* ---- Estado / mensajes ---- */
   .status {
     text-align: center;
     font-size: 14px;
     color: #64748b;
-    min-height: 20px;
-    margin-bottom: 10px;
+    min-height: 18px;
+    margin-top: 6px;
   }
   .status.error { color: #dc2626; font-weight: 700; }
 
-  /* ---- Tabla (dashboard premium) ---- */
+  /* ---- Tabla (scroll propio, cabecera congelada) ---- */
   .table-scroll {
-    overflow-x: auto;
+    overflow: auto;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
     border: 1px solid #e5e7eb;
     border-radius: 16px;
     box-shadow: 0 6px 20px rgba(15,23,42,.06);
     background: #ffffff;
   }
-  .table-scroll.fit { overflow: hidden; }
 
   table {
     border-collapse: collapse;
     width: 100%;
     font-size: var(--cell-font);
-    transform-origin: top left;
   }
   thead th {
-    background: #f8fafc;
+    background: #f1f5f9;
     color: #475569;
     font-weight: 700;
-    font-size: .8em;
+    font-size: .78em;
     text-transform: uppercase;
-    letter-spacing: .04em;
-    padding: 11px 12px;
+    letter-spacing: .03em;
+    padding: 9px 6px;
     text-align: center;
     white-space: nowrap;
     border-bottom: 2px solid #e2e8f0;
     position: sticky;
     top: 0;
+    z-index: 2;
   }
-  thead th:first-child { text-align: left; }
+  thead th:first-child { text-align: left; padding-left: 10px; }
+  thead th:last-child  { padding-right: 10px; }
   tbody td {
-    padding: 9px 12px;
+    padding: 7px 6px;
     text-align: center;
     white-space: nowrap;
     color: #1f2937;
     border-bottom: 1px solid #f1f5f9;
   }
-  tbody td:first-child { text-align: left; font-weight: 600; }
+  tbody td:first-child { text-align: left; font-weight: 600; padding-left: 10px; }
+  tbody td:last-child  { padding-right: 10px; }
   tbody tr:nth-child(even) { background: #fafcff; }
   tbody tr:last-child td { border-bottom: none; }
   tbody tr { transition: background .12s ease; }
@@ -174,36 +192,45 @@
 <body>
 <div class="wrap">
 
-  <!-- Interruptor -->
-  <div class="toggle-box">
-    <span class="toggle-label">🥖 Pedido Hoy 🥖</span>
-    <label class="switch">
-      <input type="checkbox" id="toggleActivos">
-      <span class="slider"></span>
-    </label>
-  </div>
+  <!-- Cabecera fija -->
+  <div class="topbar" id="topbar">
+    <div class="cta-bar">
+      <button id="btnZoomOut" class="cta cta-icon" aria-label="Reducir zoom general">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+          <line x1="8" y1="11" x2="14" y2="11"></line>
+        </svg>
+      </button>
+      <button id="btnZoomIn" class="cta cta-icon" aria-label="Aumentar tamaño del texto">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+          <line x1="8" y1="11" x2="14" y2="11"></line>
+          <line x1="11" y1="8" x2="11" y2="14"></line>
+        </svg>
+      </button>
+      <button id="btnZoomFit" class="cta cta-complete" aria-label="Ver la tabla completa en pantalla">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+        </svg>
+        <span>Todas las Columnas</span>
+      </button>
+    </div>
 
-  <!-- CTAs de la cabecera -->
-  <div class="cta-bar">
-    <button id="btnZoomOut" class="cta cta-icon" aria-label="Reducir zoom general (más contenido visible)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="7"></circle>
-        <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
-        <line x1="8" y1="11" x2="14" y2="11"></line>
-      </svg>
-    </button>
-    <button id="btnZoomIn" class="cta cta-icon" aria-label="Aumentar tamaño del texto de la tabla">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="7"></circle>
-        <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
-        <line x1="8" y1="11" x2="14" y2="11"></line>
-        <line x1="11" y1="8" x2="11" y2="14"></line>
-      </svg>
-    </button>
-    <button id="btnZoomFit" class="cta cta-complete" aria-label="Ver la tabla completa en pantalla">Complete View</button>
-  </div>
+    <!-- Interruptor: MES | switch | HOY -->
+    <div class="toggle-row">
+      <span class="t-label" id="lblMes">MES</span>
+      <label class="switch">
+        <input type="checkbox" id="toggleActivos">
+        <span class="slider"></span>
+      </label>
+      <span class="t-label" id="lblHoy">HOY</span>
+    </div>
 
-  <div class="status" id="status">Cargando…</div>
+    <div class="status" id="status">Cargando…</div>
+  </div>
 
   <div class="table-scroll" id="tableScroll">
     <table id="dataTable">
@@ -216,13 +243,9 @@
 
 <script>
 /* ============================================================
-   1) CONFIGURACIÓN  —  PEGA AQUÍ TU URL DE APPS SCRIPT
-   ============================================================
-   Después de desplegar el Apps Script como aplicación web,
-   copia la URL que termina en /exec y pégala entre las comillas
-   de abajo (reemplaza el texto PEGA_AQUI...).                     */
+   1) CONFIGURACIÓN  —  URL DE APPS SCRIPT
+   ============================================================ */
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyUCIQhS-A31S0gJIFE9G5Bio-d59fozLBiRF4Qz4eF6GRlo6HsxtUqM0tIB273crnl/exec";
-/* ============================================================ */
 
 // URL del CSV publicado del Google Sheet (fuente de datos).
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR1BjbiQM-QP0XSjShP74iarll9RqMh41FakufDxFL6Zdpuih_Uis-PjGpl0soEFqFm2mU3Kpr9hNZL/pub?gid=121579684&single=true&output=csv";
@@ -236,12 +259,21 @@ const tbody    = document.getElementById('tbody');
 const tableEl  = document.getElementById('dataTable');
 const scrollEl = document.getElementById('tableScroll');
 const toggleEl = document.getElementById('toggleActivos');
+const lblMes   = document.getElementById('lblMes');
+const lblHoy   = document.getElementById('lblHoy');
 
 let fontSize = 15;
-let viewMode = 'fit'; // 'fit' = tabla completa en pantalla | 'normal' = zoom manual
+let viewMode = 'fit'; // 'fit' = ajustar ancho a pantalla | 'normal' = zoom manual
 
 function applyFont() {
   document.documentElement.style.setProperty('--cell-font', fontSize + 'px');
+}
+
+/* ---------- Altura de la tabla para que la cabecera quede fija ---------- */
+function sizeTable() {
+  const top = scrollEl.getBoundingClientRect().top;
+  const h = window.innerHeight - top - 14;
+  scrollEl.style.maxHeight = Math.max(h, 180) + 'px';
 }
 
 /* ---------- Parser CSV (soporta comillas y comas internas) ---------- */
@@ -267,17 +299,34 @@ function parseCSV(text) {
   return rows;
 }
 
+/* ---------- Parser de fechas (DD/MM/YYYY, YYYY-MM-DD, etc.) ---------- */
+function parseDate(s) {
+  s = String(s || '').trim();
+  if (!s) return 0;
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3]);
+  m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
+  if (m) {
+    let y = +m[3];
+    if (y < 100) y += 2000;
+    return Date.UTC(y, +m[2] - 1, +m[1]);
+  }
+  const t = Date.parse(s);
+  return isNaN(t) ? 0 : t;
+}
+
 /* ---------- Cargar datos del Sheet (sin caché) ---------- */
 async function loadData() {
   setStatus("Cargando…", false);
   try {
-    const url = CSV_URL + "&_cb=" + Date.now(); // evita la caché
+    const url = CSV_URL + "&_cb=" + Date.now();
     const resp = await fetch(url, { cache: "no-store" });
     if (!resp.ok) throw new Error("HTTP " + resp.status);
     const text = await resp.text();
     renderTable(parseCSV(text));
     setStatus("", false);
-    if (viewMode === 'fit') completeView(); // reajustar al nuevo contenido
+    sizeTable();
+    if (viewMode === 'fit') completeView();
   } catch (err) {
     setStatus("No se pudieron cargar los datos. Revisa la conexión. (" + err.message + ")", true);
   }
@@ -290,18 +339,20 @@ function renderTable(rows) {
 
   const header = rows[0].map(h => h.trim());
 
-  // Localizar las columnas pedidas por nombre.
   let indices = COLUMNS.map(name => {
     const wanted = name.trim().toLowerCase();
     return header.findIndex(h => h.toLowerCase() === wanted);
   });
 
   let labels = COLUMNS.slice();
-  // Si no se encontró ninguna columna por nombre, mostrar todas.
   if (indices.every(i => i === -1)) {
     indices = header.map((_, i) => i);
     labels  = header;
   }
+
+  const fechaIdx = (indices.length > 0 && indices[0] !== -1)
+    ? indices[0]
+    : header.findIndex(h => h.toLowerCase().includes('fecha'));
 
   indices.forEach((idx, k) => {
     const th = document.createElement('th');
@@ -309,9 +360,15 @@ function renderTable(rows) {
     theadRow.appendChild(th);
   });
 
-  for (let r = 1; r < rows.length; r++) {
-    const cells = rows[r];
-    if (cells.every(v => (v || "").trim() === "")) continue; // saltar filas vacías
+  const dataRows = rows.slice(1).filter(cells =>
+    !cells.every(v => (v || "").trim() === "")
+  );
+
+  if (fechaIdx !== -1) {
+    dataRows.sort((a, b) => parseDate(b[fechaIdx]) - parseDate(a[fechaIdx]));
+  }
+
+  for (const cells of dataRows) {
     const tr = document.createElement('tr');
     indices.forEach(idx => {
       const td = document.createElement('td');
@@ -322,11 +379,17 @@ function renderTable(rows) {
   }
 }
 
-/* ---------- Interruptor: escribir TRUE/FALSE en F2 ---------- */
+/* ---------- Interruptor MES / HOY (filtra el pan del día) ---------- */
+function setToggleVisual(isOn) {
+  toggleEl.checked = isOn;
+  lblHoy.classList.toggle('active', isOn);
+  lblMes.classList.toggle('active', !isOn);
+}
+
 async function setFilter(isOn) {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("PEGA_AQUI") === 0) {
     setStatus("Falta pegar la URL del Apps Script en el código.", true);
-    toggleEl.checked = !isOn; // revertir el interruptor
+    setToggleVisual(!isOn);
     return;
   }
   toggleEl.disabled = true;
@@ -335,55 +398,40 @@ async function setFilter(isOn) {
     const value = isOn ? "TRUE" : "FALSE";
     await fetch(APPS_SCRIPT_URL + "?value=" + value, { method: "GET" });
     localStorage.setItem("soloActivos", value);
-    await loadData(); // recargar datos ya filtrados
+    setToggleVisual(isOn);
+    await loadData();
   } catch (err) {
     setStatus("No se pudo guardar el cambio. (" + err.message + ")", true);
-    toggleEl.checked = !isOn; // revertir el interruptor
+    setToggleVisual(!isOn);
   } finally {
     toggleEl.disabled = false;
   }
 }
 
-/* ---------- Zoom / Vista completa ---------- */
-function clearFit() {
-  viewMode = 'normal';
-  scrollEl.classList.remove('fit');
-  tableEl.style.transform = 'none';
-  scrollEl.style.height = '';
-}
-
-// Lupa - : reduce el zoom general (más filas/contenido visible).
+/* ---------- Zoom / Ver todas las columnas ---------- */
 function zoomOut() {
-  clearFit();
+  viewMode = 'normal';
   fontSize = Math.max(fontSize - 2, 7);
   applyFont();
 }
 
-// Lupa + : aumenta solo el tamaño del texto de la tabla.
 function zoomIn() {
-  clearFit();
+  viewMode = 'normal';
   fontSize = Math.min(fontSize + 2, 44);
   applyFont();
 }
 
-// Complete View : escala la tabla para que quepa ENTERA en pantalla (sin scroll horizontal).
+// Reduce el texto hasta que toda la tabla quepa de ancho (sin scroll horizontal).
 function completeView() {
   viewMode = 'fit';
-  fontSize = 15;
+  fontSize = 16;
   applyFont();
-  tableEl.style.transform = 'none';
-  scrollEl.classList.add('fit');
-  scrollEl.style.height = '';
-
-  requestAnimationFrame(() => {
-    const natW   = tableEl.scrollWidth;
-    const availW = scrollEl.clientWidth;
-    let scale = (natW > 0) ? (availW / natW) : 1;
-    if (scale > 1) scale = 1;
-    const natH = tableEl.offsetHeight;
-    tableEl.style.transform = 'scale(' + scale + ')';
-    scrollEl.style.height = Math.ceil(natH * scale) + 'px';
-  });
+  let guard = 0;
+  while (tableEl.scrollWidth > scrollEl.clientWidth && fontSize > 6 && guard < 80) {
+    fontSize -= 1;
+    applyFont();
+    guard++;
+  }
 }
 
 function setStatus(msg, isError) {
@@ -396,12 +444,13 @@ document.getElementById('btnZoomOut').addEventListener('click', zoomOut);
 document.getElementById('btnZoomIn').addEventListener('click', zoomIn);
 document.getElementById('btnZoomFit').addEventListener('click', completeView);
 toggleEl.addEventListener('change', () => setFilter(toggleEl.checked));
-window.addEventListener('resize', () => { if (viewMode === 'fit') completeView(); });
+window.addEventListener('resize', () => { sizeTable(); if (viewMode === 'fit') completeView(); });
 
-// Recuerda la posición del interruptor entre recargas (no reescribe F2 al cargar).
-if (localStorage.getItem("soloActivos") === "TRUE") toggleEl.checked = true;
+// Estado visual inicial del interruptor (no reescribe F2 al cargar).
+setToggleVisual(localStorage.getItem("soloActivos") === "TRUE");
 
 applyFont();
+sizeTable();
 loadData();
 </script>
 </body>
