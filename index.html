@@ -24,13 +24,12 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     -webkit-text-size-adjust: 100%;
     -webkit-font-smoothing: antialiased;
-    overscroll-behavior: none;
   }
 
   .wrap {
     max-width: 900px;
     margin: 0 auto;
-    padding: calc(env(safe-area-inset-top) + 12px) 10px 12px;
+    padding: calc(env(safe-area-inset-top) + 12px) 10px 40px;
   }
 
   /* ---- Cabecera fija de la página ---- */
@@ -45,7 +44,7 @@
   .cta-bar {
     display: flex;
     gap: 8px;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
   }
   .cta {
     border: none;
@@ -81,76 +80,69 @@
   }
   .cta-complete svg { width: 20px; height: 20px; flex: 0 0 auto; }
 
-  /* ---- Interruptor MES | switch | HOY ---- */
-  .toggle-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-  }
-  .t-label {
-    font-size: 16px;
-    font-weight: 800;
-    letter-spacing: .06em;
-    color: #94a3b8;
-    transition: color .2s ease;
-    user-select: none;
-  }
-  #lblMes.active { color: var(--cyan-dark); }
-  #lblHoy.active { color: var(--green-dark); }
-
-  .switch {
-    position: relative;
-    display: inline-block;
-    width: 64px;
-    height: 36px;
-    flex: 0 0 auto;
-  }
-  .switch input { opacity: 0; width: 0; height: 0; }
-  .slider {
-    position: absolute;
-    inset: 0;
-    cursor: pointer;
-    background: #cbd5e1;
-    border-radius: 36px;
-    transition: background .2s ease;
-  }
-  .slider:before {
-    content: "";
-    position: absolute;
-    height: 28px;
-    width: 28px;
-    left: 4px;
-    bottom: 4px;
-    background: #ffffff;
-    border-radius: 50%;
-    box-shadow: 0 1px 4px rgba(0,0,0,.3);
-    transition: transform .2s ease;
-  }
-  .switch input:checked + .slider { background: var(--green); }
-  .switch input:checked + .slider:before { transform: translateX(28px); }
-  .switch input:disabled + .slider { opacity: .5; cursor: progress; }
-
   /* ---- Estado / mensajes ---- */
   .status {
     text-align: center;
     font-size: 14px;
     color: #64748b;
     min-height: 18px;
-    margin-top: 6px;
   }
   .status.error { color: #dc2626; font-weight: 700; }
 
-  /* ---- Tabla (scroll propio, cabecera congelada) ---- */
+  /* ---- Títulos de sección ---- */
+  .sec-title {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 18px 0 8px;
+  }
+  .sec-title h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: .08em;
+  }
+  #tHoy h2 { color: var(--green-dark); }
+  #tMes h2 { color: var(--cyan-dark); }
+  .sec-title .sub {
+    font-size: 13px;
+    font-weight: 600;
+    color: #94a3b8;
+  }
+
+  /* Aviso al pie, debajo de la última tabla */
+  .aviso {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border: 1px solid #fecaca;
+    border-left: 4px solid #dc2626;
+    border-radius: 10px;
+    background: #fef2f2;
+    color: #b91c1c;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .empty {
+    padding: 18px 12px;
+    text-align: center;
+    color: #64748b;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  /* ---- Tablas ---- */
   .table-scroll {
     overflow: auto;
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
     border: 1px solid #e5e7eb;
     border-radius: 16px;
     box-shadow: 0 6px 20px rgba(15,23,42,.06);
     background: #ffffff;
   }
+  /* HOY: pocas filas, altura libre. MES: scroll propio. */
+  #mesScroll { max-height: 62vh; overscroll-behavior: contain; }
 
   table {
     border-collapse: collapse;
@@ -191,6 +183,10 @@
     background: #fef3c7;
     border-right: 4px double #000;
   }
+
+  /* Fila con fecha que el código NO ha sabido interpretar */
+  tbody tr.fecha-mala td { background: #fee2e2 !important; color: #b91c1c; }
+  tbody tr.fecha-mala td:first-child::after { content: " ⚠"; }
 </style>
 </head>
 <body>
@@ -223,48 +219,62 @@
       </button>
     </div>
 
-    <!-- Interruptor: MES | switch | HOY -->
-    <div class="toggle-row">
-      <span class="t-label" id="lblMes">MES</span>
-      <label class="switch">
-        <input type="checkbox" id="toggleActivos">
-        <span class="slider"></span>
-      </label>
-      <span class="t-label" id="lblHoy">HOY</span>
-    </div>
-
     <div class="status" id="status">Cargando…</div>
   </div>
 
-  <div class="table-scroll" id="tableScroll">
-    <table id="dataTable">
-      <thead><tr id="theadRow"></tr></thead>
-      <tbody id="tbody"></tbody>
+  <!-- ============ HOY ============ -->
+  <div class="sec-title" id="tHoy">
+    <h2>HOY</h2>
+    <span class="sub" id="subHoy"></span>
+  </div>
+  <div class="table-scroll" id="hoyScroll">
+    <table id="tablaHoy">
+      <thead><tr id="theadHoy"></tr></thead>
+      <tbody id="tbodyHoy"></tbody>
     </table>
   </div>
+  <div class="empty" id="hoyVacio" style="display:none">Sin entregas para hoy.</div>
+
+  <!-- ============ MES ============ -->
+  <div class="sec-title" id="tMes">
+    <h2>MES</h2>
+    <span class="sub" id="subMes"></span>
+  </div>
+  <div class="table-scroll" id="mesScroll">
+    <table id="tablaMes">
+      <thead><tr id="theadMes"></tr></thead>
+      <tbody id="tbodyMes"></tbody>
+    </table>
+  </div>
+
+  <!-- Aviso de fechas no reconocidas: debajo de la última tabla -->
+  <div class="aviso" id="aviso" style="display:none"></div>
 
 </div>
 
 <script>
 /* ============================================================
-   1) CONFIGURACIÓN  —  URL DE APPS SCRIPT
+   CONFIGURACIÓN
    ============================================================ */
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyUCIQhS-A31S0gJIFE9G5Bio-d59fozLBiRF4Qz4eF6GRlo6HsxtUqM0tIB273crnl/exec";
-
-// URL del CSV publicado del Google Sheet (fuente de datos).
+// CSV publicado del Google Sheet. Debe contener la vista COMPLETA (MES).
+// La tabla HOY se calcula filtrando aquí por la fecha del día, en el navegador.
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR1BjbiQM-QP0XSjShP74iarll9RqMh41FakufDxFL6Zdpuih_Uis-PjGpl0soEFqFm2mU3Kpr9hNZL/pub?gid=121579684&single=true&output=csv";
 
 // Columnas que se mostrarán (en este orden).
 const COLUMNS = ["Fecha Entrega", "Apto", "Normal", "Sobao", "Matalauva"];
 
-const statusEl = document.getElementById('status');
-const theadRow = document.getElementById('theadRow');
-const tbody    = document.getElementById('tbody');
-const tableEl  = document.getElementById('dataTable');
-const scrollEl = document.getElementById('tableScroll');
-const toggleEl = document.getElementById('toggleActivos');
-const lblMes   = document.getElementById('lblMes');
-const lblHoy   = document.getElementById('lblHoy');
+const statusEl  = document.getElementById('status');
+const theadHoy  = document.getElementById('theadHoy');
+const tbodyHoy  = document.getElementById('tbodyHoy');
+const theadMes  = document.getElementById('theadMes');
+const tbodyMes  = document.getElementById('tbodyMes');
+const tablaHoy  = document.getElementById('tablaHoy');
+const tablaMes  = document.getElementById('tablaMes');
+const hoyScroll = document.getElementById('hoyScroll');
+const mesScroll = document.getElementById('mesScroll');
+const hoyVacio  = document.getElementById('hoyVacio');
+const subHoy    = document.getElementById('subHoy');
+const subMes    = document.getElementById('subMes');
 
 let fontSize = 15;
 let viewMode = 'fit'; // 'fit' = ajustar ancho a pantalla | 'normal' = zoom manual
@@ -273,11 +283,9 @@ function applyFont() {
   document.documentElement.style.setProperty('--cell-font', fontSize + 'px');
 }
 
-/* ---------- Altura de la tabla para que la cabecera quede fija ---------- */
-function sizeTable() {
-  const top = scrollEl.getBoundingClientRect().top;
-  const h = window.innerHeight - top - 14;
-  scrollEl.style.maxHeight = Math.max(h, 180) + 'px';
+function setStatus(msg, isError) {
+  statusEl.textContent = msg;
+  statusEl.className = "status" + (isError ? " error" : "");
 }
 
 /* ---------- Parser CSV (soporta comillas y comas internas) ---------- */
@@ -303,20 +311,85 @@ function parseCSV(text) {
   return rows;
 }
 
-/* ---------- Parser de fechas (DD/MM/YYYY, YYYY-MM-DD, etc.) ---------- */
+/* ============================================================
+   Parser de fechas ROBUSTO
+   Devuelve NaN si NO reconoce la fecha (antes devolvía 0, y un 0
+   se ordenaba como 1970 -> la fila caía al final en silencio).
+   ============================================================ */
+const MESES = {
+  ene:0, enero:0, jan:0, january:0,
+  feb:1, febrero:1, february:1,
+  mar:2, marzo:2, march:2,
+  abr:3, abril:3, apr:3, april:3,
+  may:4, mayo:4,
+  jun:5, junio:5, june:5,
+  jul:6, julio:6, july:6,
+  ago:7, agosto:7, aug:7, august:7,
+  sep:8, sept:8, septiembre:8, september:8,
+  oct:9, octubre:9, october:9,
+  nov:10, noviembre:10, november:10,
+  dic:11, diciembre:11, dec:11, december:11
+};
+
+function _norm(w) {
+  return String(w).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\.$/, '');
+}
+
+function _mk(y, mo, d) {           // mo = 1..12
+  if (!(mo >= 1 && mo <= 12)) return NaN;
+  if (!(d  >= 1 && d  <= 31)) return NaN;
+  if (y < 1900 || y > 2200)   return NaN;
+  return Date.UTC(y, mo - 1, d);
+}
+
 function parseDate(s) {
-  s = String(s || '').trim();
-  if (!s) return 0;
-  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-  if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3]);
-  m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
-  if (m) {
-    let y = +m[3];
-    if (y < 100) y += 2000;
-    return Date.UTC(y, +m[2] - 1, +m[1]);
+  s = String(s == null ? '' : s).trim();
+  if (!s) return NaN;
+
+  // 1) Número serie de Google Sheets / Excel (ej. 46235)
+  if (/^\d{5}(\.\d+)?$/.test(s)) {
+    return Date.UTC(1899, 11, 30) + Math.round(parseFloat(s)) * 86400000;
   }
+
+  // 2) ISO: 2026-08-01  (con o sin hora)
+  let m = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return _mk(+m[1], +m[2], +m[3]);
+
+  // 3) DD/MM/YYYY, DD-MM-YY, DD.MM.YYYY (y auto-corrección si viene MM/DD)
+  m = s.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+  if (m) {
+    let d = +m[1], mo = +m[2], y = +m[3];
+    if (y < 100) y += 2000;
+    if (mo > 12 && d <= 12) { const t = d; d = mo; mo = t; }
+    return _mk(y, mo, d);
+  }
+
+  // 4) Texto: "1 ago 2026", "1 de agosto de 2026", "vie, 01 ago 2026", "1-ago-26"
+  m = _norm(s).match(/(\d{1,2})[\s\-\/.]*(?:de[\s\-]+)?([a-z]{3,})\.?[\s\-\/.]*(?:de[\s\-]+)?(\d{2,4})?/);
+  if (m && MESES[_norm(m[2])] !== undefined) {
+    let y = m[3] ? +m[3] : new Date().getFullYear();
+    if (y < 100) y += 2000;
+    return _mk(y, MESES[_norm(m[2])] + 1, +m[1]);
+  }
+
+  // 5) Último recurso: motor del navegador (solo formatos en inglés)
   const t = Date.parse(s);
-  return isNaN(t) ? 0 : t;
+  return isNaN(t) ? NaN : t;
+}
+
+// Medianoche de HOY en la misma escala UTC que devuelve parseDate.
+function hoyUTC() {
+  const n = new Date();
+  return Date.UTC(n.getFullYear(), n.getMonth(), n.getDate());
+}
+
+function fmtCorto(ms) {
+  const d = new Date(ms);
+  return String(d.getUTCDate()).padStart(2, '0') + '/' +
+         String(d.getUTCMonth() + 1).padStart(2, '0') + '/' +
+         d.getUTCFullYear();
 }
 
 /* ---------- Cargar datos del Sheet (sin caché) ---------- */
@@ -327,18 +400,42 @@ async function loadData() {
     const resp = await fetch(url, { cache: "no-store" });
     if (!resp.ok) throw new Error("HTTP " + resp.status);
     const text = await resp.text();
-    renderTable(parseCSV(text));
-    setStatus("", false);
-    sizeTable();
+    render(parseCSV(text));
     if (viewMode === 'fit') completeView();
+    // Nota: render() ya deja la barra de estado vacia; el aviso de fechas
+    // no reconocidas se pinta al pie, debajo de la tabla MES.
   } catch (err) {
     setStatus("No se pudieron cargar los datos. Revisa la conexión. (" + err.message + ")", true);
   }
 }
 
-function renderTable(rows) {
-  theadRow.innerHTML = "";
-  tbody.innerHTML = "";
+/* ---------- Pinta una tabla a partir de filas ya ordenadas ---------- */
+function pintar(theadEl, tbodyEl, header, indices, labels, filas, fechaIdx) {
+  theadEl.innerHTML = "";
+  tbodyEl.innerHTML = "";
+
+  indices.forEach((idx, k) => {
+    const th = document.createElement('th');
+    th.textContent = (idx === -1) ? labels[k] : header[idx];
+    theadEl.appendChild(th);
+  });
+
+  for (const cells of filas) {
+    const tr = document.createElement('tr');
+    if (fechaIdx !== -1 && isNaN(parseDate(cells[fechaIdx]))) {
+      tr.classList.add('fecha-mala');
+      tr.title = 'Fecha no reconocida: "' + cells[fechaIdx] + '"';
+    }
+    indices.forEach(idx => {
+      const td = document.createElement('td');
+      td.textContent = (idx === -1 || cells[idx] === undefined) ? "" : cells[idx];
+      tr.appendChild(td);
+    });
+    tbodyEl.appendChild(tr);
+  }
+}
+
+function render(rows) {
   if (!rows.length) { setStatus("La hoja no tiene datos.", true); return; }
 
   const header = rows[0].map(h => h.trim());
@@ -358,57 +455,66 @@ function renderTable(rows) {
     ? indices[0]
     : header.findIndex(h => h.toLowerCase().includes('fecha'));
 
-  indices.forEach((idx, k) => {
-    const th = document.createElement('th');
-    th.textContent = (idx === -1) ? labels[k] : header[idx];
-    theadRow.appendChild(th);
-  });
-
   const dataRows = rows.slice(1).filter(cells =>
     !cells.every(v => (v || "").trim() === "")
   );
 
+  // Orden descendente (más reciente arriba). Fechas no reconocidas al final.
   if (fechaIdx !== -1) {
-    dataRows.sort((a, b) => parseDate(b[fechaIdx]) - parseDate(a[fechaIdx]));
-  }
-
-  for (const cells of dataRows) {
-    const tr = document.createElement('tr');
-    indices.forEach(idx => {
-      const td = document.createElement('td');
-      td.textContent = (idx === -1 || cells[idx] === undefined) ? "" : cells[idx];
-      tr.appendChild(td);
+    dataRows.sort((a, b) => {
+      const ta = parseDate(a[fechaIdx]);
+      const tb = parseDate(b[fechaIdx]);
+      const na = isNaN(ta), nb = isNaN(tb);
+      if (na && nb) return 0;
+      if (na) return 1;
+      if (nb) return -1;
+      return tb - ta;
     });
-    tbody.appendChild(tr);
   }
-}
 
-/* ---------- Interruptor MES / HOY (filtra el pan del día) ---------- */
-function setToggleVisual(isOn) {
-  toggleEl.checked = isOn;
-  lblHoy.classList.toggle('active', isOn);
-  lblMes.classList.toggle('active', !isOn);
-}
+  // ---- HOY: filtrado en el navegador por fecha del día ----
+  const hoy = hoyUTC();
+  const filasHoy = (fechaIdx === -1) ? [] :
+    dataRows.filter(c => parseDate(c[fechaIdx]) === hoy);
 
-async function setFilter(isOn) {
-  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("PEGA_AQUI") === 0) {
-    setStatus("Falta pegar la URL del Apps Script en el código.", true);
-    setToggleVisual(!isOn);
-    return;
+  pintar(theadHoy, tbodyHoy, header, indices, labels, filasHoy, fechaIdx);
+  hoyScroll.style.display = filasHoy.length ? '' : 'none';
+  hoyVacio.style.display  = filasHoy.length ? 'none' : '';
+  subHoy.textContent = fmtCorto(hoy) + (filasHoy.length ? '  ·  ' + filasHoy.length + ' fila(s)' : '');
+
+  // ---- MES: todo ----
+  pintar(theadMes, tbodyMes, header, indices, labels, dataRows, fechaIdx);
+  subMes.textContent = dataRows.length + ' fila(s)';
+
+  // ---- Aviso de fechas no reconocidas ----
+  const malas = (fechaIdx === -1) ? [] :
+    dataRows.filter(c => isNaN(parseDate(c[fechaIdx])));
+
+  const avisoEl = document.getElementById('aviso');
+  if (malas.length) {
+    const vacias = malas.filter(c => String(c[fechaIdx] || '').trim() === '').length;
+    avisoEl.textContent = malas.length + ' fila(s) con fecha no reconocida (marcadas en rojo, al final)' +
+                          (vacias ? '  ·  ' + vacias + ' de ellas sin fecha' : '');
+    avisoEl.style.display = '';
+  } else {
+    avisoEl.style.display = 'none';
   }
-  toggleEl.disabled = true;
-  setStatus("Guardando…", false);
-  try {
-    const value = isOn ? "TRUE" : "FALSE";
-    await fetch(APPS_SCRIPT_URL + "?value=" + value, { method: "GET" });
-    localStorage.setItem("soloActivos", value);
-    setToggleVisual(isOn);
-    await loadData();
-  } catch (err) {
-    setStatus("No se pudo guardar el cambio. (" + err.message + ")", true);
-    setToggleVisual(!isOn);
-  } finally {
-    toggleEl.disabled = false;
+  setStatus("", false);
+
+  // ---- Modo diagnóstico: añade #debug al final de la URL ----
+  if (location.hash === '#debug') {
+    const muestra = dataRows.slice(0, 200).map(c => {
+      const v = c[fechaIdx], t = parseDate(v);
+      return (isNaN(t) ? 'NO-OK' : 'OK   ') + '  ' + JSON.stringify(v) +
+             '  ->  ' + (isNaN(t) ? '-' : new Date(t).toISOString().slice(0, 10));
+    }).join('\n');
+    console.log('=== DIAGNOSTICO FECHAS ===\nHoy = ' + new Date(hoy).toISOString().slice(0,10) +
+                '\nColumna = "' + header[fechaIdx] + '"\n' + muestra);
+    alert('Hoy: ' + new Date(hoy).toISOString().slice(0, 10) +
+          '\nColumna: "' + header[fechaIdx] + '"\n' +
+          'Filas MES: ' + dataRows.length + '  |  HOY: ' + filasHoy.length +
+          '  |  No reconocidas: ' + malas.length +
+          '\n\n' + muestra.split('\n').slice(0, 25).join('\n'));
   }
 }
 
@@ -425,36 +531,29 @@ function zoomIn() {
   applyFont();
 }
 
-// Reduce el texto hasta que toda la tabla quepa de ancho (sin scroll horizontal).
+// Reduce el texto hasta que la tabla más ancha quepa sin scroll horizontal.
 function completeView() {
   viewMode = 'fit';
   fontSize = 16;
   applyFont();
   let guard = 0;
-  while (tableEl.scrollWidth > scrollEl.clientWidth && fontSize > 6 && guard < 80) {
+  const desborda = () =>
+    (tablaMes.scrollWidth > mesScroll.clientWidth) ||
+    (hoyScroll.style.display !== 'none' && tablaHoy.scrollWidth > hoyScroll.clientWidth);
+  while (desborda() && fontSize > 6 && guard < 80) {
     fontSize -= 1;
     applyFont();
     guard++;
   }
 }
 
-function setStatus(msg, isError) {
-  statusEl.textContent = msg;
-  statusEl.className = "status" + (isError ? " error" : "");
-}
-
 /* ---------- Eventos ---------- */
 document.getElementById('btnZoomOut').addEventListener('click', zoomOut);
 document.getElementById('btnZoomIn').addEventListener('click', zoomIn);
 document.getElementById('btnZoomFit').addEventListener('click', completeView);
-toggleEl.addEventListener('change', () => setFilter(toggleEl.checked));
-window.addEventListener('resize', () => { sizeTable(); if (viewMode === 'fit') completeView(); });
-
-// Estado visual inicial del interruptor (no reescribe F2 al cargar).
-setToggleVisual(localStorage.getItem("soloActivos") === "TRUE");
+window.addEventListener('resize', () => { if (viewMode === 'fit') completeView(); });
 
 applyFont();
-sizeTable();
 loadData();
 </script>
 </body>
