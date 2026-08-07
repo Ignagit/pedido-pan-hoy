@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pedido Hoy</title>
+<style>
+  :root {
+    --cell-font: 15px;
+    --cyan: #0891b2;
+    --cyan-dark: #0e7490;
+    --green: #16a34a;
+    --green-dark: #15803d;
+    --ink: #0f172a;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: calc(env(safe-area-inset-top) + 12px) 10px 40px;
+  }
+
+  /* ---- Cabecera fija de la página ---- */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: #ffffff;
+    padding-bottom: 8px;
+  }
+
+  .cta-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .cta {
+    border: none;
+    border-radius: 14px;
+    background: var(--cyan);
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: inherit;
+    box-shadow: 0 4px 14px rgba(8,145,178,.28);
+    transition: transform .14s ease, background .18s ease, box-shadow .18s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .cta:hover { background: var(--cyan-dark); }
+  .cta:active { transform: scale(.94); box-shadow: 0 2px 8px rgba(8,145,178,.22); }
+
+  .cta-icon { flex: 0 0 48px; height: 54px; }
+  .cta-icon svg { width: 24px; height: 24px; display: block; }
+
+  .cta-complete {
+    flex: 1;
+    height: 54px;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: .01em;
+    line-height: 1.1;
+    padding: 0 8px;
+    white-space: normal;
+    text-align: center;
+  }
+  .cta-complete svg { width: 20px; height: 20px; flex: 0 0 auto; }
+
+  /* ---- Estado / mensajes ---- */
+  .status {
+    text-align: center;
+    font-size: 14px;
+    color: #64748b;
+    min-height: 18px;
+  }
+  .status.error { color: #dc2626; font-weight: 700; }
+
+  /* ---- Títulos de sección ---- */
+  .sec-title {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 18px 0 8px;
+  }
+  .sec-title h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: .08em;
+  }
+  #tHoy h2 { color: var(--green-dark); }
+  #tMes h2 { color: var(--cyan-dark); }
+  .sec-title .sub {
+    font-size: 13px;
+    font-weight: 600;
+    color: #94a3b8;
+  }
+
+  .empty {
+    padding: 18px 12px;
+    text-align: center;
+    color: #64748b;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  /* ---- Tablas ---- */
+  .table-scroll {
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    box-shadow: 0 6px 20px rgba(15,23,42,.06);
+    background: #ffffff;
+  }
+  /* HOY: pocas filas, altura libre. MES: scroll propio. */
+  #mesScroll { max-height: 62vh; overscroll-behavior: contain; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: var(--cell-font);
+  }
+  thead th {
+    background: #f1f5f9;
+    color: #475569;
+    font-weight: 700;
+    font-size: .78em;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    padding: 9px 6px;
+    text-align: center;
+    white-space: nowrap;
+    border-bottom: 2px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  thead th:first-child { text-align: left; padding-left: 10px; }
+  thead th:last-child  { padding-right: 10px; }
+  tbody td {
+    padding: 7px 6px;
+    text-align: center;
+    white-space: nowrap;
+    color: #1f2937;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  tbody td:first-child { text-align: left; font-weight: 600; padding-left: 10px; }
+  tbody td:last-child  { padding-right: 10px; }
+  tbody tr:nth-child(even) { background: #fafcff; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr { transition: background .12s ease; }
+  tbody tr:hover, tbody tr:active { background: #ecfeff; }
+  thead th:nth-child(2), tbody td:nth-child(2) {
+    background: #fef3c7;
+    border-right: 4px double #000;
+  }
+
+  /* Fila con fecha que el código NO ha sabido interpretar */
+  tbody tr.fecha-mala td { background: #fee2e2 !important; color: #b91c1c; }
+  tbody tr.fecha-mala td:first-child::after { content: " ⚠"; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Cabecera fija -->
+  <div class="topbar" id="topbar">
+    <div class="cta-bar">
+      <button id="btnZoomOut" class="cta cta-icon" aria-label="Reducir zoom general">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+          <line x1="8" y1="11" x2="14" y2="11"></line>
+        </svg>
+      </button>
+      <button id="btnZoomIn" class="cta cta-icon" aria-label="Aumentar tamaño del texto">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+          <line x1="8" y1="11" x2="14" y2="11"></line>
+          <line x1="11" y1="8" x2="11" y2="14"></line>
+        </svg>
+      </button>
+      <button id="btnZoomFit" class="cta cta-complete" aria-label="Ver la tabla completa en pantalla">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+        </svg>
+        <span>Todas las Columnas</span>
+      </button>
+    </div>
+
+    <div class="status" id="status">Cargando…</div>
+  </div>
+
+  <!-- ============ HOY ============ -->
+  <div class="sec-title" id="tHoy">
+    <h2>HOY</h2>
+    <span class="sub" id="subHoy"></span>
+  </div>
+  <div class="table-scroll" id="hoyScroll">
+    <table id="tablaHoy">
+      <thead><tr id="theadHoy"></tr></thead>
+      <tbody id="tbodyHoy"></tbody>
+    </table>
+  </div>
+  <div class="empty" id="hoyVacio" style="display:none">Sin entregas para hoy.</div>
+
+  <!-- ============ MES ============ -->
+  <div class="sec-title" id="tMes">
+    <h2>MES</h2>
+    <span class="sub" id="subMes"></span>
+  </div>
+  <div class="table-scroll" id="mesScroll">
+    <table id="tablaMes">
+      <thead><tr id="theadMes"></tr></thead>
+      <tbody id="tbodyMes"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   CONFIGURACIÓN
+   ============================================================ */
+// CSV publicado del Google Sheet. Debe contener la vista COMPLETA (MES).
+// La tabla HOY se calcula filtrando aquí por la fecha del día, en el navegador.
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR1BjbiQM-QP0XSjShP74iarll9RqMh41FakufDxFL6Zdpuih_Uis-PjGpl0soEFqFm2mU3Kpr9hNZL/pub?gid=121579684&single=true&output=csv";
+
+// Columnas que se mostrarán (en este orden).
+const COLUMNS = ["Fecha Entrega", "Apto", "Normal", "Sobao", "Matalauva"];
+
+const statusEl  = document.getElementById('status');
+const theadHoy  = document.getElementById('theadHoy');
+const tbodyHoy  = document.getElementById('tbodyHoy');
+const theadMes  = document.getElementById('theadMes');
+const tbodyMes  = document.getElementById('tbodyMes');
+const tablaHoy  = document.getElementById('tablaHoy');
+const tablaMes  = document.getElementById('tablaMes');
+const hoyScroll = document.getElementById('hoyScroll');
+const mesScroll = document.getElementById('mesScroll');
+const hoyVacio  = document.getElementById('hoyVacio');
+const subHoy    = document.getElementById('subHoy');
+const subMes    = document.getElementById('subMes');
+
+let fontSize = 15;
+let viewMode = 'fit'; // 'fit' = ajustar ancho a pantalla | 'normal' = zoom manual
+
+function applyFont() {
+  document.documentElement.style.setProperty('--cell-font', fontSize + 'px');
+}
+
+function setStatus(msg, isError) {
+  statusEl.textContent = msg;
+  statusEl.className = "status" + (isError ? " error" : "");
+}
+
+/* ---------- Parser CSV (soporta comillas y comas internas) ---------- */
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = "", inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else { inQuotes = false; }
+      } else { field += c; }
+    } else {
+      if (c === '"') { inQuotes = true; }
+      else if (c === ',') { row.push(field); field = ""; }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ""; }
+      else if (c === '\r') { /* ignorar */ }
+      else { field += c; }
+    }
+  }
+  if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+/* ============================================================
+   Parser de fechas ROBUSTO
+   Devuelve NaN si NO reconoce la fecha (antes devolvía 0, y un 0
+   se ordenaba como 1970 -> la fila caía al final en silencio).
+   ============================================================ */
+const MESES = {
+  ene:0, enero:0, jan:0, january:0,
+  feb:1, febrero:1, february:1,
+  mar:2, marzo:2, march:2,
+  abr:3, abril:3, apr:3, april:3,
+  may:4, mayo:4,
+  jun:5, junio:5, june:5,
+  jul:6, julio:6, july:6,
+  ago:7, agosto:7, aug:7, august:7,
+  sep:8, sept:8, septiembre:8, september:8,
+  oct:9, octubre:9, october:9,
+  nov:10, noviembre:10, november:10,
+  dic:11, diciembre:11, dec:11, december:11
+};
+
+function _norm(w) {
+  return String(w).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\.$/, '');
+}
+
+function _mk(y, mo, d) {           // mo = 1..12
+  if (!(mo >= 1 && mo <= 12)) return NaN;
+  if (!(d  >= 1 && d  <= 31)) return NaN;
+  if (y < 1900 || y > 2200)   return NaN;
+  return Date.UTC(y, mo - 1, d);
+}
+
+function parseDate(s) {
+  s = String(s == null ? '' : s).trim();
+  if (!s) return NaN;
+
+  // 1) Número serie de Google Sheets / Excel (ej. 46235)
+  if (/^\d{5}(\.\d+)?$/.test(s)) {
+    return Date.UTC(1899, 11, 30) + Math.round(parseFloat(s)) * 86400000;
+  }
+
+  // 2) ISO: 2026-08-01  (con o sin hora)
+  let m = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return _mk(+m[1], +m[2], +m[3]);
+
+  // 3) DD/MM/YYYY, DD-MM-YY, DD.MM.YYYY (y auto-corrección si viene MM/DD)
+  m = s.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+  if (m) {
+    let d = +m[1], mo = +m[2], y = +m[3];
+    if (y < 100) y += 2000;
+    if (mo > 12 && d <= 12) { const t = d; d = mo; mo = t; }
+    return _mk(y, mo, d);
+  }
+
+  // 4) Texto: "1 ago 2026", "1 de agosto de 2026", "vie, 01 ago 2026", "1-ago-26"
+  m = _norm(s).match(/(\d{1,2})[\s\-\/.]*(?:de[\s\-]+)?([a-z]{3,})\.?[\s\-\/.]*(?:de[\s\-]+)?(\d{2,4})?/);
+  if (m && MESES[_norm(m[2])] !== undefined) {
+    let y = m[3] ? +m[3] : new Date().getFullYear();
+    if (y < 100) y += 2000;
+    return _mk(y, MESES[_norm(m[2])] + 1, +m[1]);
+  }
+
+  // 5) Último recurso: motor del navegador (solo formatos en inglés)
+  const t = Date.parse(s);
+  return isNaN(t) ? NaN : t;
+}
+
+// Medianoche de HOY en la misma escala UTC que devuelve parseDate.
+function hoyUTC() {
+  const n = new Date();
+  return Date.UTC(n.getFullYear(), n.getMonth(), n.getDate());
+}
+
+function fmtCorto(ms) {
+  const d = new Date(ms);
+  return String(d.getUTCDate()).padStart(2, '0') + '/' +
+         String(d.getUTCMonth() + 1).padStart(2, '0') + '/' +
+         d.getUTCFullYear();
+}
+
+/* ---------- Cargar datos del Sheet (sin caché) ---------- */
+async function loadData() {
+  setStatus("Cargando…", false);
+  try {
+    const url = CSV_URL + "&_cb=" + Date.now();
+    const resp = await fetch(url, { cache: "no-store" });
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    const text = await resp.text();
+    render(parseCSV(text));
+    if (viewMode === 'fit') completeView();
+  } catch (err) {
+    setStatus("No se pudieron cargar los datos. Revisa la conexión. (" + err.message + ")", true);
+  }
+}
+
+/* ---------- Pinta una tabla a partir de filas ya ordenadas ---------- */
+function pintar(theadEl, tbodyEl, header, indices, labels, filas, fechaIdx) {
+  theadEl.innerHTML = "";
+  tbodyEl.innerHTML = "";
+
+  indices.forEach((idx, k) => {
+    const th = document.createElement('th');
+    th.textContent = (idx === -1) ? labels[k] : header[idx];
+    theadEl.appendChild(th);
+  });
+
+  for (const cells of filas) {
+    const tr = document.createElement('tr');
+    if (fechaIdx !== -1 && isNaN(parseDate(cells[fechaIdx]))) {
+      tr.classList.add('fecha-mala');
+      tr.title = 'Fecha no reconocida: "' + cells[fechaIdx] + '"';
+    }
+    indices.forEach(idx => {
+      const td = document.createElement('td');
+      td.textContent = (idx === -1 || cells[idx] === undefined) ? "" : cells[idx];
+      tr.appendChild(td);
+    });
+    tbodyEl.appendChild(tr);
+  }
+}
+
+function render(rows) {
+  if (!rows.length) { setStatus("La hoja no tiene datos.", true); return; }
+
+  const header = rows[0].map(h => h.trim());
+
+  let indices = COLUMNS.map(name => {
+    const wanted = name.trim().toLowerCase();
+    return header.findIndex(h => h.toLowerCase() === wanted);
+  });
+
+  let labels = COLUMNS.slice();
+  if (indices.every(i => i === -1)) {
+    indices = header.map((_, i) => i);
+    labels  = header;
+  }
+
+  const fechaIdx = (indices.length > 0 && indices[0] !== -1)
+    ? indices[0]
+    : header.findIndex(h => h.toLowerCase().includes('fecha'));
+
+  const dataRows = rows.slice(1).filter(cells =>
+    !cells.every(v => (v || "").trim() === "")
+  );
+
+  // Orden descendente (más reciente arriba). Fechas no reconocidas al final.
+  if (fechaIdx !== -1) {
+    dataRows.sort((a, b) => {
+      const ta = parseDate(a[fechaIdx]);
+      const tb = parseDate(b[fechaIdx]);
+      const na = isNaN(ta), nb = isNaN(tb);
+      if (na && nb) return 0;
+      if (na) return 1;
+      if (nb) return -1;
+      return tb - ta;
+    });
+  }
+
+  // ---- HOY: filtrado en el navegador por fecha del día ----
+  const hoy = hoyUTC();
+  const filasHoy = (fechaIdx === -1) ? [] :
+    dataRows.filter(c => parseDate(c[fechaIdx]) === hoy);
+
+  pintar(theadHoy, tbodyHoy, header, indices, labels, filasHoy, fechaIdx);
+  hoyScroll.style.display = filasHoy.length ? '' : 'none';
+  hoyVacio.style.display  = filasHoy.length ? 'none' : '';
+  subHoy.textContent = fmtCorto(hoy) + (filasHoy.length ? '  ·  ' + filasHoy.length + ' fila(s)' : '');
+
+  // ---- MES: todo ----
+  pintar(theadMes, tbodyMes, header, indices, labels, dataRows, fechaIdx);
+  subMes.textContent = dataRows.length + ' fila(s)';
+
+  // ---- Aviso de fechas no reconocidas ----
+  const malas = (fechaIdx === -1) ? [] :
+    dataRows.filter(c => isNaN(parseDate(c[fechaIdx])));
+
+  if (malas.length) {
+    setStatus(malas.length + ' fila(s) con fecha no reconocida (marcadas en rojo)', true);
+  } else {
+    setStatus("", false);
+  }
+
+  // ---- Modo diagnóstico: añade #debug al final de la URL ----
+  if (location.hash === '#debug') {
+    const muestra = dataRows.slice(0, 200).map(c => {
+      const v = c[fechaIdx], t = parseDate(v);
+      return (isNaN(t) ? 'NO-OK' : 'OK   ') + '  ' + JSON.stringify(v) +
+             '  ->  ' + (isNaN(t) ? '-' : new Date(t).toISOString().slice(0, 10));
+    }).join('\n');
+    console.log('=== DIAGNOSTICO FECHAS ===\nHoy = ' + new Date(hoy).toISOString().slice(0,10) +
+                '\nColumna = "' + header[fechaIdx] + '"\n' + muestra);
+    alert('Hoy: ' + new Date(hoy).toISOString().slice(0, 10) +
+          '\nColumna: "' + header[fechaIdx] + '"\n' +
+          'Filas MES: ' + dataRows.length + '  |  HOY: ' + filasHoy.length +
+          '  |  No reconocidas: ' + malas.length +
+          '\n\n' + muestra.split('\n').slice(0, 25).join('\n'));
+  }
+}
+
+/* ---------- Zoom / Ver todas las columnas ---------- */
+function zoomOut() {
+  viewMode = 'normal';
+  fontSize = Math.max(fontSize - 2, 7);
+  applyFont();
+}
+
+function zoomIn() {
+  viewMode = 'normal';
+  fontSize = Math.min(fontSize + 2, 44);
+  applyFont();
+}
+
+// Reduce el texto hasta que la tabla más ancha quepa sin scroll horizontal.
+function completeView() {
+  viewMode = 'fit';
+  fontSize = 16;
+  applyFont();
+  let guard = 0;
+  const desborda = () =>
+    (tablaMes.scrollWidth > mesScroll.clientWidth) ||
+    (hoyScroll.style.display !== 'none' && tablaHoy.scrollWidth > hoyScroll.clientWidth);
+  while (desborda() && fontSize > 6 && guard < 80) {
+    fontSize -= 1;
+    applyFont();
+    guard++;
+  }
+}
+
+/* ---------- Eventos ---------- */
+document.getElementById('btnZoomOut').addEventListener('click', zoomOut);
+document.getElementById('btnZoomIn').addEventListener('click', zoomIn);
+document.getElementById('btnZoomFit').addEventListener('click', completeView);
+window.addEventListener('resize', () => { if (viewMode === 'fit') completeView(); });
+
+applyFont();
+loadData();
+</script>
+</body>
+</html>
